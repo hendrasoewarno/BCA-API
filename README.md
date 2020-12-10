@@ -14,6 +14,7 @@ Anda dapat klik pada Documentation dan Download Sandbox BCA API Example
 # Setting Keys dan CREDENTIALS
 Hasil dari keys dan Credential, kemudian ditempatkan pada Auth.java
 
+```
 package com.hendra.bcaapi;
 
 /**
@@ -27,6 +28,7 @@ public class Auth {
     public static String APIkey="a73bb647-7ecf-4aca-89f8-************";
     public static String APIsecret="c5b55426-1c37-4930-9aa8-************";
 }
+```
 
 # Melakukan Test
 Buka file ExampleInstrumentedTest.java, dan tuliskan testcode anda
