@@ -38,11 +38,11 @@ function httpRequest($uri, $post_raw, $headers=array()) {
 		} else {
 			echo "Error HTTP Code : ".$http_code."\n";
 			echo $resp;
-			throw("Error HTTP Code : ".$http_code."\n");
+			throw new Exception("Error HTTP Code : ".$http_code."\n");
 		}
 	} else {
 		echo "Error while sending request, reason:".curl_error($ch);
-		throw("Error while sending request, reason:".curl_error($ch));
+		throw new Exception("Error while sending request, reason:".curl_error($ch));
 	}
 	curl_close($ch);
 }
@@ -56,7 +56,8 @@ function getXbcaTimestamp() {
 }
 
 function getAccessToken() {
-	return httpRequest(URL . "/api/oauth/token", "grant_type=client_credentials", 
+	return httpRequest(URL . "/api/oauth/token",
+		"grant_type=client_credentials", 
 		array(
 			"Authorization:Basic " . base64_encode(clientId . ":" . clientSecret),
 			"Content-Type:application/x-www-form-urlencoded"
@@ -102,12 +103,44 @@ function callAPIGET($uri, $accessToken, $APIkey) {
 	return $result;
 }
 
+function callAPIPOST($uri, $arrPayload, $accessToken, $APIkey) {
+	$strJson = stripcslashes(json_encode($arrPayload));
+	$result = httpRequest(URL . $uri, $strJson,
+		array(
+			"Authorization:Bearer " . $accessToken,
+			"X-BCA-Signature:" . getLocalSignature($uri, "POST", $accessToken, $strJson),
+			"Content-Type:application/json",
+			"X-BCA-Key:" . $APIkey,
+			"X-BCA-Timestamp:" . getXbcaTimestamp(),
+			"HTTPMethod:POST"
+		)
+	);
+	
+	return $result;
+}
+
 date_default_timezone_set('Asia/Jakarta');
+var_dump(getAccessToken());
 try {
 	$token = json_decode(getAccessToken());
 	echo callAPIGET("/general/rate/forex", $token->access_token, APIkey);
+	echo callAPIGET("/banking/v3/corporates/BCAAPI2016/accounts/0063001004", $token->access_token, APIkey);
+	
+    $arrPayload = array(
+            "CorporateID"=>"BCAAPI2016",
+            "SourceAccountNumber"=>"0201245680",
+            "TransactionID"=>"00000001",
+            "TransactionDate"=> date("Y-m-d"),
+            "ReferenceID"=>"12345/PO/2020",
+            "CurrencyCode"=>"IDR",
+            "Amount"=>"100000.00",
+            "BeneficiaryAccountNumber"=>"0201245681",
+            "Remark1"=>"transfertest",
+            "Remark2"=>"onlinetransfer"
+	);
+
+	echo callAPIPOST("/banking/corporates/transfers", $arrPayload, $token->access_token, APIkey);
 }
 catch (Exception $e) {
 	echo $e->getMessage();
 }
-?>
