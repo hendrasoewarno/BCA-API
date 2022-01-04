@@ -1,38 +1,38 @@
 <?php
-define("URL","https://sandbox.bca.co.id:443");
-define("clientId","8d418acc-8185-42ae-8aea-c18fc2f*****");
-define("clientSecret","2d67d158-ada7-4792-b452-a360332*****");
-define("APIkey","9798acf5-62c6-410e-a843-b6250b2*****");
-define("APIsecret","0fa94027-65a7-42fe-b63e-063670b*****");
+define("HOST","https://sandbox.bca.co.id:443");
+define("clientId","8d418acc-8185-42ae-8aea-c18fc2f10d52");
+define("clientSecret","2d67d158-ada7-4792-b452-a36033270e20");
+define("APIkey","9798acf5-62c6-410e-a843-b6250b2b5ae6");
+define("APIsecret","0fa94027-65a7-42fe-b63e-063670b361c3");
 
-function httpRequest($uri, $post_raw, $headers=array()) {
+function httpRequest($url, $payload, $headers=array()) {
 	$ch = curl_init();
-	if ($post_raw!="")
+	if ($payload!="")
 		curl_setopt_array($ch, array(
-			CURLOPT_URL => $uri, # URL endpoint
-			CURLOPT_HTTPHEADER => $headers, # HTTP Headers
-			CURLOPT_RETURNTRANSFER => 1, # return hasil curl_exec ke variabel, tidak langsung dicetak
-			CURLOPT_FOLLOWLOCATION => 1, # atur flag followlocation untuk mengikuti bila ada url redirect di server penerima tetap difollow
-			CURLOPT_CONNECTTIMEOUT => 60, # set connection timeout ke 60 detik, untuk mencegah request gantung
-			CURLOPT_POST => 1, # set flag request method POST
-			CURLOPT_POSTFIELDS => $post_raw, # attached post data dalam bentuk JSON String
-			CURLOPT_SSL_VERIFYPEER => 0
+			CHOSTOPT_HOST => $url, # HOST endpoint
+			CHOSTOPT_HTTPHEADER => $headers, # HTTP Headers
+			CHOSTOPT_RETURNTRANSFER => 1, # return hasil curl_exec ke variabel, tidak langsung dicetak
+			CHOSTOPT_FOLLOWLOCATION => 1, # atur flag followlocation untuk mengikuti bila ada url redirect di server penerima tetap difollow
+			CHOSTOPT_CONNECTTIMEOUT => 60, # set connection timeout ke 60 detik, untuk mencegah request gantung
+			CHOSTOPT_POST => 1, # set flag request method POST
+			CHOSTOPT_POSTFIELDS => $payload, # attached post data dalam bentuk JSON String
+			CHOSTOPT_SSL_VERIFYPEER => 0
 		));
 	else
 		curl_setopt_array($ch, array(
-			CURLOPT_URL => $uri, # URL endpoint
-			CURLOPT_HTTPHEADER => $headers, # HTTP Headers
-			CURLOPT_RETURNTRANSFER => 1, # return hasil curl_exec ke variabel, tidak langsung dicetak
-			CURLOPT_FOLLOWLOCATION => 1, # atur flag followlocation untuk mengikuti bila ada url redirect di server penerima tetap difollow
-			CURLOPT_CONNECTTIMEOUT => 60, # set connection timeout ke 60 detik, untuk mencegah request gantung
-			CURLOPT_POST => 0, # set flag request method POST
-			CURLOPT_SSL_VERIFYPEER => 0
+			CHOSTOPT_HOST => $url, # HOST endpoint
+			CHOSTOPT_HTTPHEADER => $headers, # HTTP Headers
+			CHOSTOPT_RETURNTRANSFER => 1, # return hasil curl_exec ke variabel, tidak langsung dicetak
+			CHOSTOPT_FOLLOWLOCATION => 1, # atur flag followlocation untuk mengikuti bila ada url redirect di server penerima tetap difollow
+			CHOSTOPT_CONNECTTIMEOUT => 60, # set connection timeout ke 60 detik, untuk mencegah request gantung
+			CHOSTOPT_POST => 0, # set flag request method POST
+			CHOSTOPT_SSL_VERIFYPEER => 0
 		));
 	
 	$resp = curl_exec($ch);
 
 	if (curl_errno($ch) == false) {
-		$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		$http_code = curl_getinfo($ch, CHOSTINFO_HTTP_CODE);
 		if ($http_code == 200) { //success
 			return $resp;
 		} else {
@@ -56,7 +56,7 @@ function getXbcaTimestamp() {
 }
 
 function getAccessToken() {
-	return httpRequest(URL . "/api/oauth/token",
+	return httpRequest(HOST . "/api/oauth/token",
 		"grant_type=client_credentials", 
 		array(
 			"Authorization:Basic " . base64_encode(clientId . ":" . clientSecret),
@@ -65,8 +65,8 @@ function getAccessToken() {
 	);
 }
 
-function reSortURIParameters($uri) {
-	$parameters = explode("?",$uri);
+function reSortURIParameters($url) {
+	$parameters = explode("?",$url);
 	$newURI = $parameters[0];
 	if (sizeof($parameters)>1) {
 		$newURI .= "?";
@@ -81,19 +81,19 @@ function reSortURIParameters($uri) {
 	return $newURI;
 }
 
-function getLocalSignature($uri, $method, $accessToken, $requestPayload="") {
+function getLocalSignature($url, $method, $accessToken, $payload="") {
     $timestamp = getXbcaTimestamp();
-    $stringToSign = $method . ":" . reSortURIParameters($uri) . ":" . $accessToken . ":" . hash('sha256',$requestPayload) . ":" . $timestamp;
+    $stringToSign = $method . ":" . reSortURIParameters($url) . ":" . $accessToken . ":" . hash('sha256',$payload) . ":" . $timestamp;
 	$signature = hash_hmac('sha256', $stringToSign, APIsecret);
 	return $signature;
 }
 
-function callAPIGET($uri, $accessToken, $APIkey) {
+function callAPIGET($url, $accessToken, $APIkey) {
 
-	$result = httpRequest(URL . $uri, "",
+	$result = httpRequest(HOST . $url, "",
 		array(
 			"Authorization:Bearer " . $accessToken,
-			"X-BCA-Signature:" . getLocalSignature($uri, "GET", $accessToken),
+			"X-BCA-Signature:" . getLocalSignature($url, "GET", $accessToken),
 			"X-BCA-Key:" . $APIkey,
 			"X-BCA-Timestamp:" . getXbcaTimestamp(),
 			"HTTPMethod:GET"
@@ -103,12 +103,12 @@ function callAPIGET($uri, $accessToken, $APIkey) {
 	return $result;
 }
 
-function callAPIPOST($uri, $arrPayload, $accessToken, $APIkey) {
+function callAPIPOST($url, $arrPayload, $accessToken, $APIkey) {
 	$strJson = stripcslashes(json_encode($arrPayload));
-	$result = httpRequest(URL . $uri, $strJson,
+	$result = httpRequest(HOST . $url, $strJson,
 		array(
 			"Authorization:Bearer " . $accessToken,
-			"X-BCA-Signature:" . getLocalSignature($uri, "POST", $accessToken, $strJson),
+			"X-BCA-Signature:" . getLocalSignature($url, "POST", $accessToken, $strJson),
 			"Content-Type:application/json",
 			"X-BCA-Key:" . $APIkey,
 			"X-BCA-Timestamp:" . getXbcaTimestamp(),
@@ -144,3 +144,4 @@ try {
 catch (Exception $e) {
 	echo $e->getMessage();
 }
+?>
